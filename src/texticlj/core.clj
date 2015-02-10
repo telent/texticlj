@@ -7,18 +7,22 @@
                 (repeatedly #(and (.find r)
                                   (let [s (.start r) e (.end r)]
                                     [s (- e s) (subs string s e)]))))))
+
 (defn first-match [re string]
   (let [r (re-matcher re string)]
     (and (.find r)
          (let [s (.start r) e (.end r)]
-           [s (- e s) (subs string s e)]))))
+           [s e (re-groups r ) ]))))
 
 (declare hiccup-inline)
 (def inline-replacements
-  [[#"_(.*?)_" (fn [innards] (cons :i (hiccup-inline innards)))]
-   [#"@(.*?)@" (fn [innards] (cons :tt (hiccup-inline innards)))]
-   [#"-(.*?)-" (fn [innards] (cons :s (hiccup-inline innards)))]
-   [#"\*(.*?)\*" (fn [innards] (cons :b (hiccup-inline innards)))]])
+  [[#"_(.*?)_" (fn [[_ g]] (cons :i (hiccup-inline g)))]
+   [#"@(.*?)@" (fn [[_ g]] (cons :tt (hiccup-inline g)))]
+   [#"-(.*?)-" (fn [[_ g]] (cons :s (hiccup-inline g)))]
+   [#"\*(.*?)\*" (fn [[_ g]] (cons :b (hiccup-inline g)))]
+   [#"((https?|ftp|gopher|mailto)\S+)"
+    (fn [[whole]] (list :a {:href whole} whole))]
+   ])
 
 (defn hiccup-inline [body]
   (let [matches (reduce (fn [r l]
@@ -29,12 +33,10 @@
                         inline-replacements)
         m (if-let [k (keys matches)] (apply min-key first k))
         fun (get matches m)]
-    (if m
-      (let [s (first m)
-            e (+ (first m) (second m))]
-        (cons (subs body 0 s)
-              (cons (fun (subs body (inc s) (dec e)))
-                    (hiccup-inline (subs body e)))))
+    (if-let [[s e groups] m]
+      (cons (subs body 0 s)
+            (cons (fun groups)
+                  (hiccup-inline (subs body  e))))
       (list body))))
 
 (assert (= '("test text")
@@ -53,6 +55,12 @@
 ;; and nested markup works too
 (assert (= '("" (:b "bold " (:i "italics") "") " rule")
            (hiccup-inline "*bold _italics_* rule")))
+;; url markup
+(assert (= '("" (:b "bold " (:i "italics") "") " rule "
+             (:a {:href "https://www.google.com"} "https://www.google.com") "")
+           (hiccup-inline "*bold _italics_* rule https://www.google.com")))
+
+
 
 
 (defn treeify [level matches strings]
