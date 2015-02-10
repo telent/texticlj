@@ -1,30 +1,59 @@
 (ns texticlj.core
   (require [clojure.string :as str]))
 
-(def inline-replacements
-  [[#"_(.*?)_" (fn x [body matches]
-                 (let [s (first match)
-                       e (+ (first match) (second match))]
-                   (println more)
-                   [(subs body 0 s)
-                    [:i (subs body (inc s) (dec e))]
-                    (if (seq more)
-                      (x body more)
-                      (subs body e))]))]])
-
-
-(defn hiccup-inline [body]
-  (let [[re fun] (first inline-replacements)]
-    (if-let [m (seq (all-matches re body))]
-      (fun body m)
-      body)))
-
 (defn all-matches [re string]
   (let [r (re-matcher re string)]
     (take-while vector?
                 (repeatedly #(and (.find r)
                                   (let [s (.start r) e (.end r)]
                                     [s (- e s) (subs string s e)]))))))
+(defn first-match [re string]
+  (let [r (re-matcher re string)]
+    (and (.find r)
+         (let [s (.start r) e (.end r)]
+           [s (- e s) (subs string s e)]))))
+
+(declare hiccup-inline)
+(def inline-replacements
+  [[#"_(.*?)_" (fn [innards] (cons :i (hiccup-inline innards)))]
+   [#"@(.*?)@" (fn [innards] (cons :tt (hiccup-inline innards)))]
+   [#"-(.*?)-" (fn [innards] (cons :s (hiccup-inline innards)))]
+   [#"\*(.*?)\*" (fn [innards] (cons :b (hiccup-inline innards)))]])
+
+(defn hiccup-inline [body]
+  (let [matches (reduce (fn [r l]
+                          (if-let [m (first-match (first l) body)]
+                            (assoc r m (second l))
+                            r))
+                        {}
+                        inline-replacements)
+        m (if-let [k (keys matches)] (apply min-key first k))
+        fun (get matches m)]
+    (if m
+      (let [s (first m)
+            e (+ (first m) (second m))]
+        (cons (subs body 0 s)
+              (cons (fun (subs body (inc s) (dec e)))
+                    (hiccup-inline (subs body e)))))
+      (list body))))
+
+(assert (= '("test text")
+           (hiccup-inline "test text")))
+(assert (= '("foo " (:i "bar") " baz")
+           (hiccup-inline "foo _bar_ baz")))
+(assert (= '("foo " (:i "hello") " i " (:i "hello 2") "")
+           (hiccup-inline "foo _hello_ i _hello 2_")))
+(assert (= '("foo "
+             (:tt "code") "  "
+             (:i "hello") " i "
+             (:i "hello 2") "")
+           (hiccup-inline "foo @code@  _hello_ i _hello 2_")))
+(assert (= '("foo " (:b "code") "")
+           (hiccup-inline "foo *code*")))
+;; and nested markup works too
+(assert (= '("" (:b "bold " (:i "italics") "") " rule")
+           (hiccup-inline "*bold _italics_* rule")))
+
 
 (defn treeify [level matches strings]
   (when-let [s (seq matches)]
