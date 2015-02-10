@@ -10,14 +10,18 @@ The input is a lump of text.  Processing is as follows:
 
 # separate it into block-level elements
 
+<pre>
     p h[123456] bq
+</pre>
 
 Each element is introduced by its name followed by "." and finished by
 a blank line.  If the element name is missing, assume p
 
 # find ordered and unordered lists
 
+<pre>
     ^#+ ' or '^*+ ' 
+</pre>
     
 mark the start of a list item; nesting depth is given by the number of
 hashes or stars. The item runs until (a) the next item, or (b) the end
@@ -26,8 +30,10 @@ of the block.
 # within each block, look for character sequences that delimit inline
 elements
 
+<pre>
 " *" bold  "* "
 " _" underline  "_ "
+</pre>
 
 ... etc
 
