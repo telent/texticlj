@@ -1,0 +1,6 @@
+h1. Texticlj
+
+A Clojure library designed to process an "approximate subset" of the Textile text markup format
+
+Based on https://github.com/telent/texticl
+

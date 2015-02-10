@@ -1,0 +1,3 @@
+[submodule "texticl"]
+	path = texticl
+	url = https://github.com/telent/texticl
