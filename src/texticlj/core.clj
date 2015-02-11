@@ -16,14 +16,14 @@
 
 (declare hiccup-inline)
 (def inline-replacements
-  [[#"_(.*?)_" (fn [[_ g]] (cons :i (hiccup-inline g)))]
-   [#"@(.*?)@" (fn [[_ g]] (cons :tt (hiccup-inline g)))]
-   [#"\s-(\w.*?\w)-\s" (fn [[_ g]] (cons :s (hiccup-inline g)))]
-   [#"\*(.*?)\*" (fn [[_ g]] (cons :b (hiccup-inline g)))]
+  [[#"_(.*?)_" (fn [[_ g]] (into [:i] (hiccup-inline g)))]
+   [#"@(.*?)@" (fn [[_ g]] (into [:tt] (hiccup-inline g)))]
+   [#"\s-(\w.*?\w)-\s" (fn [[_ g]] (into [:s] (hiccup-inline g)))]
+   [#"\*(.*?)\*" (fn [[_ g]] (into [:b] (hiccup-inline g)))]
    [#"\"(.*?)\":((https?|ftp|gopher|mailto)\S+)"
-    (fn [[_ label target]] (list :a {:href target} label))]
+    (fn [[_ label target]] (into [:a] [{:href target} label]))]
    [#"((https?|ftp|gopher|mailto)\S+)"
-    (fn [[whole]] (list :a {:href whole} whole))]
+    (fn [[whole]] (into [:a] [{:href whole} whole]))]
    ])
 
 (defn hiccup-inline [body]
@@ -82,12 +82,13 @@
 
 (declare hiccup-list-item)
 (defn hiccup-list-body [tree]
-  (apply vector (list-type tree) (map hiccup-list-item tree)))
+  [(into [(list-type tree)] (map hiccup-list-item tree))])
 
 (defn hiccup-list-item [[[marker text] & leaves]]
-  (if-let [l (seq leaves)]
-    [:li (hiccup-inline text) (hiccup-list-body l)]
-    [:li (hiccup-inline text)]))
+  (let [self (into [:li] (hiccup-inline text))]
+    (if-let [l (seq leaves)]
+      (into self (hiccup-list-body l))
+      self)))
 
 (defn hiccup-for-lists [block]
   (let [matches (all-matches #"(?m)^[*#]+" block)]
@@ -117,9 +118,9 @@
 (defn hiccup-for-block [block]
   (let [[match tagname] (re-find block-element-re block)]
     (if match
-      [(get block-elements tagname)
-       (hiccup-for-lists (str/replace-first block match ""))]
-      [:p (hiccup-for-lists block)])))
+      (into [(get block-elements tagname)]
+            (hiccup-for-lists (str/replace-first block match "")))
+      (into [:p] (hiccup-for-lists block)))))
 
 (defn to-hiccup [text]
   (let [blocks (str/split text #"\n\n")]
