@@ -18,7 +18,7 @@
 (def inline-replacements
   [[#"_(.*?)_" (fn [[_ g]] (cons :i (hiccup-inline g)))]
    [#"@(.*?)@" (fn [[_ g]] (cons :tt (hiccup-inline g)))]
-   [#"-(.*?)-" (fn [[_ g]] (cons :s (hiccup-inline g)))]
+   [#"-(\w.*?\w)-" (fn [[_ g]] (cons :s (hiccup-inline g)))]
    [#"\*(.*?)\*" (fn [[_ g]] (cons :b (hiccup-inline g)))]
    [#"((https?|ftp|gopher|mailto)\S+)"
     (fn [[whole]] (list :a {:href whole} whole))]
