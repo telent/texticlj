@@ -1,8 +1,15 @@
 h1. Texticlj
 
-_note that inline elements are not yet implemented_
+A Clojure library designed to transform an "approximate subset" of the
+Textile text markup format into something you could feed into Hiccup.
+It probably doesn't do exactly the same as Textile in any strange or
+borderline cases, and it _deliberately_ doesn't do exactly the same as
+Textile in the case of newlines, which it leaves intact in the output
+instead of transforming them to &lt;br>
 
-A Clojure library designed to process an "approximate subset" of the Textile text markup format.  It probably doesn't do exactly the same as textile in any strange or borderline cases, but it generally does what I want instead.
+<pre>
+(texticlj.core/to-hiccup (slurp "myfile.textile"))
+</pre>
 
 Based on https://github.com/telent/texticl
 
@@ -37,4 +44,4 @@ elements
 
 ... etc
 
-# links, footnotes, tables, stuff lik that all TBD
+# footnotes, tables, stuff like that all TBD
