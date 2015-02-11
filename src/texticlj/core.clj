@@ -82,8 +82,8 @@
 
 (defn hiccup-list-item [[[marker text] & leaves]]
   (if-let [l (seq leaves)]
-    [:li text (hiccup-list-body l)]
-    [:li text]))
+    [:li (hiccup-inline text) (hiccup-list-body l)]
+    [:li (hiccup-inline text)]))
 
 (defn hiccup-for-lists [block]
   (let [matches (all-matches #"(?m)^[*#]+" block)]
@@ -97,7 +97,7 @@
                         (let [[s l _] (last matches)] [s (subs block (+ s l))]))
             tree (treeify 1 matches (into {} substrings))]
         (hiccup-list-body tree))
-      block)))
+      (hiccup-inline block))))
 
 (def block-elements
   (let [names [:p :h1 :h2 :h3 :h4 :h5 :h6 :pre]]
