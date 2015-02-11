@@ -18,8 +18,10 @@
 (def inline-replacements
   [[#"_(.*?)_" (fn [[_ g]] (cons :i (hiccup-inline g)))]
    [#"@(.*?)@" (fn [[_ g]] (cons :tt (hiccup-inline g)))]
-   [#"-(\w.*?\w)-" (fn [[_ g]] (cons :s (hiccup-inline g)))]
+   [#"\s-(\w.*?\w)-\s" (fn [[_ g]] (cons :s (hiccup-inline g)))]
    [#"\*(.*?)\*" (fn [[_ g]] (cons :b (hiccup-inline g)))]
+   [#"\"(.*?)\":((https?|ftp|gopher|mailto)\S+)"
+    (fn [[_ label target]] (list :a {:href target} label))]
    [#"((https?|ftp|gopher|mailto)\S+)"
     (fn [[whole]] (list :a {:href whole} whole))]
    ])
@@ -31,6 +33,8 @@
                             r))
                         {}
                         inline-replacements)
+        ;; XXX where two matches at the same offset, we should pick
+        ;; the longer
         m (if-let [k (keys matches)] (apply min-key first k))
         fun (get matches m)]
     (if-let [[s e groups] m]
