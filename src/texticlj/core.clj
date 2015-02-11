@@ -8,7 +8,7 @@
                                   (let [s (.start r) e (.end r)]
                                     [s (- e s) (subs string s e)]))))))
 
-(defn first-match [re string]
+(defn match-with-groups [re string]
   (let [r (re-matcher re string)]
     (and (.find r)
          (let [s (.start r) e (.end r)]
@@ -26,7 +26,7 @@
 
 (defn hiccup-inline [body]
   (let [matches (reduce (fn [r l]
-                          (if-let [m (first-match (first l) body)]
+                          (if-let [m (match-with-groups (first l) body)]
                             (assoc r m (second l))
                             r))
                         {}
