@@ -140,7 +140,7 @@
       (into [:p] (hiccup-for-lists block)))))
 
 (defn to-hiccup [text]
-  (let [blocks (str/split text #"\n\n")]
+  (let [blocks (str/split text #"\r?\n\r?\n")]
     (map hiccup-for-block blocks)))
 
 
