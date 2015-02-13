@@ -20,8 +20,15 @@
    [#"@(.*?)@" (fn [[_ g]] (into [:tt] (hiccup-inline g)))]
    [#"\s-(\w.*?\w)-\s" (fn [[_ g]] (into [:s] (hiccup-inline g)))]
    [#"\*(.*?)\*" (fn [[_ g]] (into [:b] (hiccup-inline g)))]
+
+   [#"!([<>]?)(.*?)!"
+    (fn [[_ align src]]
+      (let [klass (case align ">" "right" "<" "left" "flow")]
+        [:img {:class klass :src src}]))]
+
    [#"\"(.*?)\":((https?|ftp|gopher|mailto)\S+)"
     (fn [[_ label target]] (into [:a] [{:href target} label]))]
+
    [#"((https?|ftp|gopher|mailto)\S+)"
     (fn [[whole]] (into [:a] [{:href whole} whole]))]
    ])
