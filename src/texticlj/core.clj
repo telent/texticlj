@@ -42,9 +42,8 @@
                             r))
                         {}
                         inline-replacements)
-        ;; XXX where two matches at the same offset, we should pick
-        ;; the longer
-        m (if-let [k (keys matches)] (apply min-key first k))
+        goodness (fn [[s e & rest]] [s (- s e)])
+        m (if-let [k (keys matches)] (first (sort-by goodness (keys matches))))
         fun (get matches m)]
     (if-let [[s e groups] m]
       (cons (subs body 0 s)
