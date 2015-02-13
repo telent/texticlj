@@ -16,10 +16,12 @@
 
 (declare hiccup-inline)
 (def inline-replacements
-  [[#"_(.*?)_" (fn [[_ g]] (into [:i] (hiccup-inline g)))]
-   [#"@(.*?)@" (fn [[_ g]] (into [:tt] (hiccup-inline g)))]
+  [[#"(?s)<(.*?)>" (fn [[whole]] whole)] ;don't markup inside html tags
+   [#"(?is)<pre>(.*?)</pre>" (fn [[whole]] whole)] ; or PRE body
+   [#"(?s)_(.*?)_" (fn [[_ g]] (into [:i] (hiccup-inline g)))]
+   [#"(?s)@(.*?)@" (fn [[_ g]] [:code g])]
    [#"\s-(\w.*?\w)-\s" (fn [[_ g]] (into [:s] (hiccup-inline g)))]
-   [#"\*(.*?)\*" (fn [[_ g]] (into [:b] (hiccup-inline g)))]
+   [#"(?s)\*(.*?)\*" (fn [[_ g]] (into [:b] (hiccup-inline g)))]
 
    [#"!([<>]?)(.*?)!"
     (fn [[_ align src]]
@@ -57,7 +59,7 @@
 (assert (= '("foo " (:i "hello") " i " (:i "hello 2") "")
            (hiccup-inline "foo _hello_ i _hello 2_")))
 (assert (= '("foo "
-             (:tt "code") "  "
+             (:code "code") "  "
              (:i "hello") " i "
              (:i "hello 2") "")
            (hiccup-inline "foo @code@  _hello_ i _hello 2_")))
@@ -70,6 +72,14 @@
 (assert (= '("" (:b "bold " (:i "italics") "") " rule "
              (:a {:href "https://www.google.com"} "https://www.google.com") "")
            (hiccup-inline "*bold _italics_* rule https://www.google.com")))
+
+;; no markup of html tag contents
+
+(assert (= "hello <a href='http://foo.com'>foo</a>"
+           (str/join (hiccup-inline "hello <a href='http://foo.com'>foo</a>"))))
+
+(assert (= "hello <a\nhref='http://foo.com'>foo</a>"
+           (str/join (hiccup-inline "hello <a\nhref='http://foo.com'>foo</a>"))))
 
 
 
