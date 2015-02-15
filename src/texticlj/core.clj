@@ -28,7 +28,13 @@
       (let [klass (case align ">" "right" "<" "left" "flow")]
         [:img {:class klass :src src}]))]
 
-   [#"\"(.*?)\":((https?|ftp|gopher|mailto)\S+)"
+   [#"!F([<>]?)(.*?)!"
+    (fn [[_ align id]]
+      (let [klass (case align ">" "right" "<" "left" "flow")]
+        [:div {:class (str "flickr-photo image " klass)
+               :photo_id id}]))]
+
+   [#"(?s)\"([^\"]*?)\":((https?|ftp|gopher|mailto)\S+)"
     (fn [[_ label target]] (into [:a] [{:href target} label]))]
 
    [#"((https?|ftp|gopher|mailto)\S+)"
