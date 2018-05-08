@@ -1,4 +1,11 @@
-(defproject texticlj "0.1.0-SNAPSHOT"
+(def package-version
+  (let [v (clojure.string/trim-newline (slurp "VERSION"))
+        p (System/getenv "PATCH_LEVEL")]
+    (if p
+      (str v "." p)
+      (str v ".0-SNAPSHOT" p))))
+
+(defproject texticlj package-version
   :description "Convert approximately-Textile markup to Hiccup"
   :url "http://github.com/telent/texticlj"
   :license {:name "Eclipse Public License"
