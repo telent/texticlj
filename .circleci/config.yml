@@ -31,8 +31,6 @@ jobs:
           # fallback to using the latest cache if no exact match is found
           - v1-dependencies-
 
-      - run: curl -O https://gist.githubusercontent.com/telent/745b3eaf25bc63297121edae794cb351/raw/324db23cac267004506c245555130660e6086dcb/push_github_release.rb
-      - run: sudo apt-get update && sudo apt-get install ruby
       - run: lein deps
 
       - save_cache:
@@ -41,7 +39,7 @@ jobs:
           key: v1-dependencies-{{ checksum "project.clj" }}
         
       # run tests!
-      - run: |
-          lein test
-          lein jar
-          PATCH_LEVEL=`git rev-list HEAD --count`  ruby push_github_release.rb target/*.jar
+      - run: lein test
+
+      - run: lein deploy
+

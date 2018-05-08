@@ -5,9 +5,12 @@
       (str v "." p)
       (str v ".0-SNAPSHOT" p))))
 
-(defproject texticlj package-version
+(defproject telent/texticlj package-version
   :description "Convert approximately-Textile markup to Hiccup"
   :url "http://github.com/telent/texticlj"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
+  :repositories [["snapshots" {:url  "https://clojars.org/repo"
+                               :username "telent"
+                               :password :env/CLOJARS_PASSWORD}]]
   :dependencies [[org.clojure/clojure "1.6.0"]])
