@@ -32,7 +32,7 @@ jobs:
           - v1-dependencies-
 
       - run: curl -O https://gist.githubusercontent.com/telent/745b3eaf25bc63297121edae794cb351/raw/324db23cac267004506c245555130660e6086dcb/push_github_release.rb
-      - run: apt-get install ruby
+      - run: sudo apt-get install ruby
       - run: lein deps
 
       - save_cache:
