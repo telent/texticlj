@@ -1,5 +1,5 @@
 (ns texticlj.core
-  (require [clojure.string :as str]))
+  (:require [clojure.string :as str]))
 
 (defn all-matches [re string]
   (let [r (re-matcher re string)]
