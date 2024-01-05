@@ -39,6 +39,12 @@
 
    [#"((https?|ftp|gopher|mailto)\S+)"
     (fn [[whole]] (into [:a] [{:href whole} whole]))]
+
+   [#"(?s)\[(\d+)\]"
+    (fn [[_ index]] [:sup {:class "footnote" :id (str "fnr" index)} [:a {:href (str "#fn" index)} (str index)]])]
+
+   [#"(?s)(\A|\n\n)fn(\d+)\.\s+(.*?)(\n{2}?|\z)"
+    (fn [[_ _ index text _]] [:p {:class "footnote" :id (str "fn" index)} [:a {:href (str "#fnr" index)} [:sup (str index)]] (str " " text)])]
    ])
 
 (defn hiccup-inline [body]
@@ -86,6 +92,18 @@
 (assert (= "hello <a\nhref='http://foo.com'>foo</a>"
            (str/join (hiccup-inline "hello <a\nhref='http://foo.com'>foo</a>"))))
 
+;; simple footnotes
+(assert (= '("Sentence." (:sup {:class "footnote" :id "fnr13"} (:a {:href "#fn13"} "13")) "" (:sup {:class "footnote" :id "fnr14"} (:a {:href "#fn14"} "14")) "")
+  (hiccup-inline "Sentence.[13][14]")))
+
+(assert (= '(""
+              (:p {:class "footnote" :id "fn13"}
+                (:a {:href "#fnr13"} (:sup "13"))
+                " This is a footnote.\nfn14. This is a second line that's part of the first footnote.") ""
+              (:p {:class "footnote" :id "fn15"}
+                (:a {:href "#fnr15"} (:sup "15"))
+                " This is a new footnote.") "")
+  (hiccup-inline "fn13. This is a footnote.\nfn14. This is a second line that's part of the first footnote.\n\nfn15. This is a new footnote.")))
 
 
 
