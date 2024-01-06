@@ -41,10 +41,15 @@
     (fn [[whole]] (into [:a] [{:href whole} whole]))]
 
    [#"(?s)\[(\d+)\]"
-    (fn [[_ index]] [:sup {:class "footnote" :id (str "fnr" index)} [:a {:href (str "#fn" index)} (str index)]])]
+    (fn [[_ index]]
+      [:sup {:class "footnote" :id (str "fnr" index)}
+       [:a {:href (str "#fn" index)} (str index)]])]
 
-   [#"(?s)(\A|\n\n)fn(\d+)\.\s+(.*?)(\n{2}?|\z)"
-    (fn [[_ _ index text _]] [:p {:class "footnote" :id (str "fn" index)} [:a {:href (str "#fnr" index)} [:sup (str index)]] (str " " text)])]
+   [#"(?s)(\A|\n\n)fn(\d+)\.(\s+.*?)(\n{2}?|\z)"
+    (fn [[_ _ index text _]]
+      [:p {:class "footnote" :id (str "fn" index)}
+       [:a {:href (str "#fnr" index)} [:sup (str index)]]
+       (hiccup-inline text)])]
    ])
 
 (defn hiccup-inline [body]
@@ -99,11 +104,13 @@
 (assert (= '(""
               (:p {:class "footnote" :id "fn13"}
                 (:a {:href "#fnr13"} (:sup "13"))
-                " This is a footnote.\nfn14. This is a second line that's part of the first footnote.") ""
+                (" This is a footnote.\nfn14. This is a "
+                 (:i "second line")
+                 " that's part of the first footnote.")) ""
               (:p {:class "footnote" :id "fn15"}
                 (:a {:href "#fnr15"} (:sup "15"))
-                " This is a new footnote.") "")
-  (hiccup-inline "fn13. This is a footnote.\nfn14. This is a second line that's part of the first footnote.\n\nfn15. This is a new footnote.")))
+                (" This is a new footnote.")) "")
+  (hiccup-inline "fn13. This is a footnote.\nfn14. This is a _second line_ that's part of the first footnote.\n\nfn15. This is a new footnote.")))
 
 
 
