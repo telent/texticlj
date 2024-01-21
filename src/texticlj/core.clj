@@ -23,7 +23,7 @@
    [#"\s-(\w.*?\w)-\s" (fn [[_ g]] (into [:s] (hiccup-inline g)))]
    [#"(?s)\*(.*?)\*" (fn [[_ g]] (into [:b] (hiccup-inline g)))]
 
-   [#"!([<>]?)(.*?)!"
+   [#"!((?>!\s)[<>]?)(.*?)!"
     (fn [[_ align src]]
       (let [klass (case align ">" "right" "<" "left" "flow")]
         [:img {:class klass :src src}]))]
@@ -34,11 +34,22 @@
         [:div {:class (str "flickr-photo image " klass)
                :photo_id id}]))]
 
-   [#"(?s)\"([^\"]*?)\":((https?|ftp|gopher|mailto)\S+)"
+   [#"(?s)\"([^\"]*?)\":((https?|ftp|gopher|mailto)\S+(?<!\.))"
     (fn [[_ label target]] (into [:a] [{:href target} label]))]
 
-   [#"((https?|ftp|gopher|mailto)\S+)"
+   [#"((https?|ftp|gopher|mailto)\S+(?<!\.))"
     (fn [[whole]] (into [:a] [{:href whole} whole]))]
+
+   [#"(?s)\[(\d+)\]"
+    (fn [[_ index]]
+      [:sup {:class "footnote" :id (str "fnr" index)}
+       [:a {:href (str "#fn" index)} (str index)]])]
+
+   [#"(?s)(\A|\n\n)fn(\d+)\.(\s+.*?)(\n{2}?|\z)"
+    (fn [[_ _ index text _]]
+      [:p {:class "footnote" :id (str "fn" index)}
+       [:a {:href (str "#fnr" index)} [:sup (str index)]]
+       (hiccup-inline text)])]
    ])
 
 (defn hiccup-inline [body]
@@ -86,7 +97,20 @@
 (assert (= "hello <a\nhref='http://foo.com'>foo</a>"
            (str/join (hiccup-inline "hello <a\nhref='http://foo.com'>foo</a>"))))
 
+;; simple footnotes
+(assert (= '("Sentence." (:sup {:class "footnote" :id "fnr13"} (:a {:href "#fn13"} "13")) "" (:sup {:class "footnote" :id "fnr14"} (:a {:href "#fn14"} "14")) "")
+  (hiccup-inline "Sentence.[13][14]")))
 
+(assert (= '(""
+              (:p {:class "footnote" :id "fn13"}
+                (:a {:href "#fnr13"} (:sup "13"))
+                (" This is a footnote.\nfn14. This is a "
+                 (:i "second line")
+                 " that's part of the first footnote.")) ""
+              (:p {:class "footnote" :id "fn15"}
+                (:a {:href "#fnr15"} (:sup "15"))
+                (" This is a new footnote.")) "")
+  (hiccup-inline "fn13. This is a footnote.\nfn14. This is a _second line_ that's part of the first footnote.\n\nfn15. This is a new footnote.")))
 
 
 (defn treeify [level matches strings]
@@ -113,18 +137,21 @@
       self)))
 
 (defn hiccup-for-lists [block]
-  (let [matches (all-matches #"(?m)^[*#]+" block)]
+  (let [matches (all-matches #"(?m)^[*#]+(?= )" block)]
     (if (seq matches)
       (let [substrings (conj
                         (map (fn [a b]
                                [(first a)
-                                (subs block (+ (first a) (second a)) (first b))])
+                                (str/trim (subs block (+ (first a) (second a)) (first b)))])
                              matches
                              (rest matches))
-                        (let [[s l _] (last matches)] [s (subs block (+ s l))]))
+                        (let [[s l _] (last matches)] [s (str/trim (subs block (+ s l)))]))
             tree (treeify 1 matches (into {} substrings))]
         (hiccup-list-body tree))
       (hiccup-inline block))))
+
+(assert (= [[:ul [:li "a"] [:li "b"] [:li "c" [:ul [:li "d"]]]]]
+          (hiccup-for-lists "* a\n* b\n* c\n** d")))
 
 (def block-elements
   (let [names [:p :h1 :h2 :h3 :h4 :h5 :h6 :pre]]
