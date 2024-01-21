@@ -23,7 +23,7 @@
    [#"\s-(\w.*?\w)-\s" (fn [[_ g]] (into [:s] (hiccup-inline g)))]
    [#"(?s)\*(.*?)\*" (fn [[_ g]] (into [:b] (hiccup-inline g)))]
 
-   [#"!([<>]?)(.*?)!"
+   [#"!((?>!\s)[<>]?)(.*?)!"
     (fn [[_ align src]]
       (let [klass (case align ">" "right" "<" "left" "flow")]
         [:img {:class klass :src src}]))]
@@ -34,10 +34,10 @@
         [:div {:class (str "flickr-photo image " klass)
                :photo_id id}]))]
 
-   [#"(?s)\"([^\"]*?)\":((https?|ftp|gopher|mailto)\S+)"
+   [#"(?s)\"([^\"]*?)\":((https?|ftp|gopher|mailto)\S+(?<!\.))"
     (fn [[_ label target]] (into [:a] [{:href target} label]))]
 
-   [#"((https?|ftp|gopher|mailto)\S+)"
+   [#"((https?|ftp|gopher|mailto)\S+(?<!\.))"
     (fn [[whole]] (into [:a] [{:href whole} whole]))]
 
    [#"(?s)\[(\d+)\]"
@@ -113,7 +113,6 @@
   (hiccup-inline "fn13. This is a footnote.\nfn14. This is a _second line_ that's part of the first footnote.\n\nfn15. This is a new footnote.")))
 
 
-
 (defn treeify [level matches strings]
   (when-let [s (seq matches)]
     (let [head [(nth (first s) 2) (get strings (ffirst s))]
@@ -138,18 +137,21 @@
       self)))
 
 (defn hiccup-for-lists [block]
-  (let [matches (all-matches #"(?m)^[*#]+" block)]
+  (let [matches (all-matches #"(?m)^[*#]+(?= )" block)]
     (if (seq matches)
       (let [substrings (conj
                         (map (fn [a b]
                                [(first a)
-                                (subs block (+ (first a) (second a)) (first b))])
+                                (str/trim (subs block (+ (first a) (second a)) (first b)))])
                              matches
                              (rest matches))
-                        (let [[s l _] (last matches)] [s (subs block (+ s l))]))
+                        (let [[s l _] (last matches)] [s (str/trim (subs block (+ s l)))]))
             tree (treeify 1 matches (into {} substrings))]
         (hiccup-list-body tree))
       (hiccup-inline block))))
+
+(assert (= [[:ul [:li "a"] [:li "b"] [:li "c" [:ul [:li "d"]]]]]
+          (hiccup-for-lists "* a\n* b\n* c\n** d")))
 
 (def block-elements
   (let [names [:p :h1 :h2 :h3 :h4 :h5 :h6 :pre]]
